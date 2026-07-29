@@ -84,7 +84,7 @@ cd hoot
 ./Scripts/package_dmg.sh   # → dist/Hoot-x.y.z.dmg (optional)
 ```
 
-Then move `build/Hoot.app` into `/Applications`. The app icon and logo are generated from code, too: `swift Scripts/make_icon.swift`.
+Then move `build/Hoot.app` into `/Applications`. The app icon and logo are derived from the master artwork in `assets/icon-master.png` — regenerate them with `swift Scripts/make_icon.swift`.
 
 ## License
 

@@ -1,131 +1,106 @@
 #!/usr/bin/env swift
 //
-// Generates Hoot's app icon (Support/AppIcon.icns) and the README logo
-// (assets/logo.png). Pure CoreGraphics — no design tools required.
+// Builds Support/AppIcon.icns and assets/logo.png from the master artwork in
+// assets/icon-master.png. The artwork square is located by opacity (with a
+// brightness fallback for masters without an alpha channel), scaled onto the
+// standard macOS icon grid, and masked to a clean rounded square with
+// transparent corners.
 //
 // Usage (from the repo root): swift Scripts/make_icon.swift
 
 import AppKit
 import UniformTypeIdentifiers
 
-func color(_ hex: UInt32, _ alpha: CGFloat = 1) -> CGColor {
-    CGColor(srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
-            green: CGFloat((hex >> 8) & 0xFF) / 255,
-            blue: CGFloat(hex & 0xFF) / 255,
-            alpha: alpha)
+let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+
+func loadMaster() -> CGImage {
+    let url = root.appendingPathComponent("assets/icon-master.png")
+    guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+          let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+        print("make_icon: could not read assets/icon-master.png")
+        exit(1)
+    }
+    return image
 }
 
-// All geometry lives in a 1024x1024 canvas and is scaled down per size.
-func drawIcon(into ctx: CGContext, canvas: CGFloat) {
-    ctx.saveGState()
-    let s = canvas / 1024
-    ctx.scaleBy(x: s, y: s)
-
-    // Background: rounded square, midnight sky.
-    let bgRect = CGRect(x: 100, y: 100, width: 824, height: 824)
-    ctx.addPath(CGPath(roundedRect: bgRect, cornerWidth: 185, cornerHeight: 185, transform: nil))
-    ctx.clip()
-
-    let gradient = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-                              colors: [color(0x4A3AA8), color(0x241B52)] as CFArray,
-                              locations: [0, 1])!
-    ctx.drawLinearGradient(gradient,
-                           start: CGPoint(x: 512, y: 924),
-                           end: CGPoint(x: 512, y: 100),
-                           options: [])
-
-    // Stars.
-    ctx.setFillColor(color(0xFFFFFF, 0.85))
-    let stars: [(CGFloat, CGFloat, CGFloat)] = [
-        (200, 800, 7), (300, 720, 5), (430, 830, 6), (585, 795, 5),
-        (835, 640, 6), (180, 620, 5), (640, 870, 6), (880, 700, 5),
-        (250, 520, 4)
-    ]
-    for (x, y, r) in stars {
-        ctx.fillEllipse(in: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
+/// Finds the bounding box of the artwork square: rows and columns where at
+/// least half the pixels belong to the artwork rather than the surroundings.
+func artworkBounds(of image: CGImage) -> CGRect {
+    let width = image.width
+    let height = image.height
+    let hasAlpha = image.alphaInfo != .none && image.alphaInfo != .noneSkipLast && image.alphaInfo != .noneSkipFirst
+    guard let ctx = CGContext(data: nil, width: width, height: height,
+                              bitsPerComponent: 8, bytesPerRow: width * 4,
+                              space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                              bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue),
+          let buffer = { () -> UnsafeMutablePointer<UInt8>? in
+              ctx.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+              return ctx.data?.assumingMemoryBound(to: UInt8.self)
+          }() else {
+        print("make_icon: could not rasterize master")
+        exit(1)
     }
 
-    // Crescent moon. The punch happens inside a transparency layer so it
-    // does not erase the sky behind the moon.
-    ctx.beginTransparencyLayer(auxiliaryInfo: nil)
-    ctx.setFillColor(color(0xFFE39A))
-    ctx.fillEllipse(in: CGRect(x: 740, y: 760, width: 130, height: 130))
-    ctx.setBlendMode(.destinationOut)
-    ctx.fillEllipse(in: CGRect(x: 715, y: 783, width: 120, height: 120))
-    ctx.setBlendMode(.normal)
-    ctx.endTransparencyLayer()
-
-    drawOwl(ctx)
-    ctx.restoreGState()
-}
-
-func drawOwl(_ ctx: CGContext) {
-    let body = color(0xC98A5B)
-    let wing = color(0xA96B3F)
-    let belly = color(0xF2D9B0)
-    let pupil = color(0x2A2140)
-    let accent = color(0xF5A840)
-
-    // Ear tufts.
-    ctx.setFillColor(body)
-    ctx.beginPath()
-    ctx.move(to: CGPoint(x: 330, y: 610))
-    ctx.addLine(to: CGPoint(x: 285, y: 775))
-    ctx.addLine(to: CGPoint(x: 445, y: 685))
-    ctx.closePath()
-    ctx.fillPath()
-    ctx.beginPath()
-    ctx.move(to: CGPoint(x: 694, y: 610))
-    ctx.addLine(to: CGPoint(x: 739, y: 775))
-    ctx.addLine(to: CGPoint(x: 579, y: 685))
-    ctx.closePath()
-    ctx.fillPath()
-
-    // Body.
-    ctx.fillEllipse(in: CGRect(x: 262, y: 170, width: 500, height: 540))
-
-    // Wings.
-    ctx.setFillColor(wing)
-    ctx.fillEllipse(in: CGRect(x: 250, y: 260, width: 130, height: 330))
-    ctx.fillEllipse(in: CGRect(x: 644, y: 260, width: 130, height: 330))
-
-    // Belly.
-    ctx.setFillColor(belly)
-    ctx.fillEllipse(in: CGRect(x: 377, y: 195, width: 270, height: 280))
-
-    // Eyes — wide awake.
-    for center in [CGPoint(x: 420, y: 555), CGPoint(x: 604, y: 555)] {
-        ctx.setFillColor(color(0xFFFFFF))
-        ctx.fillEllipse(in: CGRect(x: center.x - 92, y: center.y - 92, width: 184, height: 184))
-        ctx.setFillColor(pupil)
-        ctx.fillEllipse(in: CGRect(x: center.x - 40, y: center.y - 40, width: 80, height: 80))
-        ctx.setFillColor(color(0xFFFFFF))
-        ctx.fillEllipse(in: CGRect(x: center.x + 8, y: center.y + 10, width: 26, height: 26))
+    var rowCounts = [Int](repeating: 0, count: height)
+    var colCounts = [Int](repeating: 0, count: width)
+    for y in 0..<height {
+        for x in 0..<width {
+            let p = (y * width + x) * 4
+            let isArtwork: Bool
+            if hasAlpha {
+                isArtwork = buffer[p + 3] >= 200
+            } else {
+                // No alpha channel: treat meaningfully bright pixels as artwork.
+                isArtwork = Int(buffer[p]) + Int(buffer[p + 1]) + Int(buffer[p + 2]) > 180
+            }
+            if isArtwork {
+                rowCounts[y] += 1
+                colCounts[x] += 1
+            }
+        }
     }
 
-    // Beak.
-    ctx.setFillColor(accent)
-    ctx.beginPath()
-    ctx.move(to: CGPoint(x: 478, y: 468))
-    ctx.addLine(to: CGPoint(x: 546, y: 468))
-    ctx.addLine(to: CGPoint(x: 512, y: 405))
-    ctx.closePath()
-    ctx.fillPath()
+    guard let firstRow = rowCounts.firstIndex(where: { $0 > width / 2 }),
+          let lastRow = rowCounts.lastIndex(where: { $0 > width / 2 }),
+          let firstCol = colCounts.firstIndex(where: { $0 > height / 2 }),
+          let lastCol = colCounts.lastIndex(where: { $0 > height / 2 }) else {
+        print("make_icon: could not locate the artwork square in the master")
+        exit(1)
+    }
 
-    // Feet.
-    ctx.fillEllipse(in: CGRect(x: 407, y: 152, width: 82, height: 44))
-    ctx.fillEllipse(in: CGRect(x: 535, y: 152, width: 82, height: 44))
+    // Row indices are in bitmap order; the rect below is in CG (y-up) space.
+    return CGRect(x: CGFloat(firstCol),
+                  y: CGFloat(height - 1 - lastRow),
+                  width: CGFloat(lastCol - firstCol + 1),
+                  height: CGFloat(lastRow - firstRow + 1))
 }
+
+let master = loadMaster()
+let bounds = artworkBounds(of: master)
 
 func render(_ pixels: Int) -> CGImage {
-    let ctx = CGContext(data: nil,
-                        width: pixels,
-                        height: pixels,
-                        bitsPerComponent: 8,
-                        bytesPerRow: 0,
+    let ctx = CGContext(data: nil, width: pixels, height: pixels,
+                        bitsPerComponent: 8, bytesPerRow: 0,
                         space: CGColorSpace(name: CGColorSpace.sRGB)!,
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
-    drawIcon(into: ctx, canvas: CGFloat(pixels))
+    let size = CGFloat(pixels)
+
+    // Standard macOS icon grid: content square with a transparent margin.
+    let margin = size * 100 / 1024
+    let content = size * 824 / 1024
+    let radius = size * 200 / 1024
+    ctx.addPath(CGPath(roundedRect: CGRect(x: margin, y: margin, width: content, height: content),
+                       cornerWidth: radius, cornerHeight: radius, transform: nil))
+    ctx.clip()
+
+    // Scale the full master so its artwork square lands exactly on the grid.
+    let scaleX = content / bounds.width
+    let scaleY = content / bounds.height
+    ctx.interpolationQuality = .high
+    ctx.draw(master, in: CGRect(x: margin - bounds.minX * scaleX,
+                                y: margin - bounds.minY * scaleY,
+                                width: CGFloat(master.width) * scaleX,
+                                height: CGFloat(master.height) * scaleY))
     return ctx.makeImage()!
 }
 
@@ -136,7 +111,6 @@ func writePNG(_ image: CGImage, to url: URL) {
 }
 
 do {
-    let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     let iconset = root.appendingPathComponent("build/AppIcon.iconset")
     try? FileManager.default.removeItem(at: iconset)
     try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
@@ -163,10 +137,8 @@ do {
         exit(1)
     }
 
-    try FileManager.default.createDirectory(at: root.appendingPathComponent("assets"), withIntermediateDirectories: true)
     writePNG(render(512), to: root.appendingPathComponent("assets/logo.png"))
-
-    print("Wrote Support/AppIcon.icns and assets/logo.png")
+    print("Wrote Support/AppIcon.icns and assets/logo.png from icon-master.png")
 } catch {
     print("make_icon failed: \(error.localizedDescription)")
     exit(1)
