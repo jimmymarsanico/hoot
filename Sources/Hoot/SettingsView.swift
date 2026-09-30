@@ -9,7 +9,13 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            ShortcutRecorder()
+            VStack(alignment: .leading, spacing: 4) {
+                ShortcutRecorder()
+                Text("Tap to turn on for 15m; keep tapping to step through 30m, 1h, 2h, 4h. Tap again later to turn off. Double-tap to stay awake indefinitely.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             Divider()
 

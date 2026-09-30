@@ -32,13 +32,23 @@ func dumpIcons(to directory: String) -> Int32 {
     let dir = URL(fileURLWithPath: directory, isDirectory: true)
     do {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        try writePNG(StatusIcon.awake, to: dir.appendingPathComponent("menubar-awake.png"))
+        for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
+            var drawError: Error?
+            NSAppearance(named: appearance)!.performAsCurrentDrawingAppearance {
+                do {
+                    try writePNG(StatusIcon.awake, to: dir.appendingPathComponent("menubar-awake-\(name).png"))
+                } catch {
+                    drawError = error
+                }
+            }
+            if let drawError { throw drawError }
+        }
         try writePNG(StatusIcon.asleep, to: dir.appendingPathComponent("menubar-asleep.png"))
     } catch {
         print("dump-icons: \(error.localizedDescription)")
         return 1
     }
-    print("dump-icons: wrote menubar-awake.png and menubar-asleep.png to \(dir.path)")
+    print("dump-icons: wrote menubar-awake-{light,dark}.png and menubar-asleep.png to \(dir.path)")
     return 0
 }
 
