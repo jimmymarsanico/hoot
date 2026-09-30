@@ -48,6 +48,12 @@ You only need to do this once. If you'd rather not trust a downloaded binary at 
 
 ## Usage
 
+_Menu Bar Icons_
+| **Status** | **Icon** |
+|---|---|
+| **Hoot Asleep** |<img width="22" height="22" alt="hoot-asleep-icon" src="https://github.com/user-attachments/assets/556bb292-3797-470f-baca-29a0969eb26f" />|
+| **Hoot Awake** | <img width="20" height="20" alt="hoot-awake-icon" src="https://github.com/user-attachments/assets/82a082d7-9818-49a0-a272-41eb309640ad" />|
+
 Click the owl and pick a mode:
 
 | Menu item | What it does |
@@ -71,6 +77,14 @@ Record a shortcut in **Settings…** (for example **⌃⌘H**) and you can run H
 | **Double-tap** | Keeps your Mac awake **indefinitely** (double-tap again to turn off) |
 
 Each press pops up a small overlay near the bottom of the screen showing what Hoot just did, with the steps `15m 30m 1h 2h 4h` and the current one highlighted. It fades on its own — no notifications, no permissions.
+
+_Hoot Status Change Indicators_
+| **Status Change** | **Shortcut Key** | **Icon** |
+|---|---|---|
+| Cycle Through "On" | shortcut x1 |<img width="247" height="117" alt="hoot-cycle" src="https://github.com/user-attachments/assets/1b2257ba-6e71-41a6-9883-3cbb09afbf27" />|
+| Turn off | shortcut x1 |<img width="229" height="78" alt="hoot-asleep" src="https://github.com/user-attachments/assets/3188c026-469c-4005-a3c7-0b00a7466805" />|
+| Keep on | shortcut x2 |<img width="239" height="83" alt="hoot-awake" src="https://github.com/user-attachments/assets/e9a660f3-58d5-4fd5-919e-db3af7179b25" />|
+
 
 Tips:
 
