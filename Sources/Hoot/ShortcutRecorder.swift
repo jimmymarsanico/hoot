@@ -11,7 +11,7 @@ struct ShortcutRecorder: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Text("Toggle keep-awake:")
+            Text("Keep-awake shortcut:")
 
             Button(action: toggleRecording) {
                 Text(isRecording ? "Type shortcut…" : (store.hotkey?.display ?? "Record Shortcut"))

@@ -4,11 +4,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let controller = CaffeinateController()
 
     private var statusItem: NSStatusItem!
+    private lazy var shortcutActions = ShortcutActions(controller: controller)
     private lazy var settingsWindowController = SettingsWindowController(controller: controller)
 
     private let statusLine = NSMenuItem()
     private let toggleItem = NSMenuItem()
     private let appWatchMenu = NSMenu()
+    private var appearanceObservation: NSKeyValueObservation?
 
     private static let durations: [(title: String, seconds: TimeInterval)] = [
         ("5 Minutes", 5 * 60),
@@ -31,11 +33,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.button?.image = StatusIcon.asleep
         statusItem.button?.toolTip = "Hoot"
         statusItem.menu = buildMenu()
+        // The awake owl draws its own light/dark silhouette, so redraw it when
+        // the menu bar's appearance changes (wallpaper, Dark Mode).
+        appearanceObservation = statusItem.button?.observe(\.effectiveAppearance) { button, _ in
+            button.needsDisplay = true
+        }
 
         controller.onChange = { [weak self] in self?.refresh() }
 
         HotkeyCenter.shared.handler = { [weak self] in
-            self?.controller.toggle()
+            self?.shortcutActions.hotkeyPressed()
         }
         _ = HotkeyStore.shared // loads and registers any saved shortcut
 

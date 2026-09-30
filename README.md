@@ -15,14 +15,14 @@
 
 Hoot is a tiny macOS menu bar app that stops your Mac from going to sleep — for five minutes, for four hours, until an app finishes running, or until you say otherwise. It's a friendly face on macOS's built-in [`caffeinate`](https://ss64.com/mac/caffeinate.html) command: no daemons, no kernel extensions, nothing running that Apple didn't ship.
 
-The owl in your menu bar tells you everything at a glance: **eyes open, your Mac stays awake. Eyes closed, normal sleep rules apply.**
+The owl in your menu bar tells you everything at a glance: **eyes open and purple, your Mac stays awake. Eyes closed, normal sleep rules apply.**
 
 ## Features
 
 - ☕ **One click to stay awake** — toggle keep-awake indefinitely from the menu bar
 - ⏱ **Timed sessions** — 5, 15, or 30 minutes; 1, 2, 3, 4, 8, or 12 hours — with a live countdown in the menu
 - 🏃 **"While an app is running"** — pick any running app and Hoot keeps your Mac awake until that app quits (great for long builds, exports, and downloads)
-- ⌨️ **Global keyboard shortcut** — record any shortcut to toggle keep-awake from anywhere
+- ⌨️ **Global keyboard shortcut** — tap to turn on for 15m and keep tapping to step up to 30m, 1h, 2h, or 4h; tap again later to turn off; double-tap to stay awake indefinitely — with an on-screen confirmation each time
 - 🖥 **Display control** — keep the screen on too, or let the display sleep while the system stays awake
 - 🚀 **Launch at login** — optional, off by default
 - 🪶 **Featherweight** — no Dock icon, no background services; quit Hoot and everything returns to normal instantly
@@ -59,11 +59,30 @@ Click the owl and pick a mode:
 
 The first line of the menu always shows what Hoot is doing right now (e.g. *"Awake — 1:23:45 left"*).
 
+### Keyboard shortcut
+
+Record a shortcut in **Settings…** (for example **⌃⌘H**) and you can run Hoot from any app without touching the menu bar:
+
+| Press | What happens |
+|---|---|
+| **Tap** (while Hoot is off) | Keeps your Mac awake for **15 minutes** |
+| **Tap again** while the overlay is still showing | Steps up: **30 min → 1 hr → 2 hr → 4 hr** → off |
+| **Tap** once the overlay has faded | Turns Hoot **off** |
+| **Double-tap** | Keeps your Mac awake **indefinitely** (double-tap again to turn off) |
+
+Each press pops up a small overlay near the bottom of the screen showing what Hoot just did, with the steps `15m 30m 1h 2h 4h` and the current one highlighted. It fades on its own — no notifications, no permissions.
+
+Tips:
+
+- **Picking a duration:** tap, then keep tapping at a relaxed pace until the overlay shows the one you want, and stop. The overlay stays up about 1.5 seconds after each tap; once it's gone, your choice is locked in.
+- **Don't tap too fast** when stepping through durations — two presses within about a third of a second count as a double-tap (indefinite).
+- **One tap is always an off switch** once Hoot has settled — whether it was started from the shortcut, the menu, or *While an App Is Running*.
+
 ### Settings
 
 **Settings…** in the menu opens a small window where you can:
 
-- **Record a global keyboard shortcut** that toggles keep-awake from any app
+- **Record a global keyboard shortcut** that works from any app (see [Keyboard shortcut](#keyboard-shortcut))
 - **Keep the display awake too** (on by default) — turn it off and your screen can sleep while the system stays up
 - **Launch Hoot at login**
 
